@@ -10,101 +10,101 @@
 // @grant        none
 // ==/UserScript==
 
-
 (function() {
     'use strict';
 
-    /*************************************************
-     * 1) Inject CSS to expand containers and un-truncate titles
-     *************************************************/
-    const style = document.createElement('style');
-    style.innerHTML = `
-        /* Expand containers (no fixed/max height) */
-        .ytd-video-renderer #dismissible,
-        .ytd-video-renderer #details,
-        .ytd-video-renderer #meta,
-        .ytd-grid-video-renderer #dismissible,
-        .ytd-grid-video-renderer #details,
-        .ytd-grid-video-renderer #meta,
-        .ytd-compact-video-renderer #dismissible,
-        .ytd-compact-video-renderer #details,
-        .ytd-compact-video-renderer #meta,
-        .ytd-rich-item-renderer #dismissible,
-        .ytd-rich-item-renderer #details,
-        .ytd-rich-item-renderer #meta,
-        .ytd-rich-grid-media #details {
-            height: auto !important;
-            max-height: none !important;
-            overflow: visible !important;
-        }
-
-        /* Untruncate titles: remove text-overflow and allow wrapping */
+    // Custom CSS to override YouTube's default title truncation
+    const customCSS = `
+        /* Remove title truncation */
         #video-title,
-        .ytd-video-renderer #video-title,
-        .ytd-grid-video-renderer #video-title,
-        .ytd-compact-video-renderer #video-title,
-        .ytd-rich-item-renderer #video-title {
-            display: block !important;        /* so margin-bottom works */
+        ytd-compact-video-renderer #video-title.ytd-compact-video-renderer,
+        ytd-grid-video-renderer #video-title.ytd-grid-video-renderer,
+        ytd-rich-grid-media #video-title.ytd-rich-grid-media {
+            display: block !important;
+            -webkit-line-clamp: unset !important;
+            -webkit-box-orient: unset !important;
             white-space: normal !important;
-            text-overflow: unset !important;
+            max-height: none !important;
+            line-height: 1.4em !important;
             overflow: visible !important;
-            line-height: 1.4 !important;      /* more vertical spacing */
-            margin-bottom: 1em !important;    /* space between title & channel row */
+            text-overflow: unset !important;
         }
 
-        /* Keep channel avatar & name on one line, add a bit of spacing above */
-        .ytd-video-owner-renderer,
-        .ytd-video-owner-renderer #owner-container,
-        .ytd-video-meta-block #owner-container,
-        .ytd-rich-item-renderer #owner-container,
-        .ytd-compact-video-renderer #owner-container {
-            display: flex !important;
-            align-items: center !important;
-            margin-top: 0.6em !important;
+        /* Adjust spacing for channel info */
+        ytd-video-meta-block,
+        #meta.ytd-grid-video-renderer,
+        #meta.ytd-rich-grid-media {
+            margin-top: 8px !important;
+            padding-top: 4px !important;
+            position: relative !important;
         }
 
-        /* Gap between channel avatar and channel name */
-        .ytd-video-owner-renderer #avatar,
-        .ytd-video-owner-renderer #avatar-link,
-        .ytd-rich-item-renderer #avatar,
-        .ytd-rich-item-renderer #avatar-link,
-        .ytd-compact-video-renderer #avatar,
-        .ytd-compact-video-renderer #avatar-link {
-            margin-right: 0.6em !important;
+        /* Ensure thumbnails maintain proper spacing */
+        ytd-rich-item-renderer,
+        ytd-grid-video-renderer,
+        ytd-compact-video-renderer {
+            margin-bottom: 24px !important;
         }
     `;
-    document.head.appendChild(style);
 
-    /*************************************************
-     * 2) MutationObserver to remove any inline style
-     *    that re-enables line-clamp on the titles
-     *************************************************/
-    const removeClamp = () => {
-        document.querySelectorAll('#video-title').forEach(el => {
-            // Remove possible inline styles that clamp lines
-            el.style.setProperty('-webkit-line-clamp', 'unset', 'important');
-            el.style.setProperty('-webkit-box-orient', 'unset', 'important');
-            el.style.setProperty('max-height', 'none', 'important');
-            // The following ensures it remains multiline
-            el.style.setProperty('white-space', 'normal', 'important');
-            el.style.setProperty('overflow', 'visible', 'important');
-            el.style.setProperty('text-overflow', 'unset', 'important');
-            el.style.setProperty('display', 'block', 'important');
-            el.style.setProperty('line-height', '1.4', 'important');
+    // Function to inject custom styles
+    function injectStyles() {
+        const styleElement = document.createElement('style');
+        styleElement.textContent = customCSS;
+        document.head.appendChild(styleElement);
+    }
+
+    // Function to remove inline styles that might cause truncation
+    function removeInlineStyles(element) {
+        if (!element) return;
+        
+        const titleElements = element.querySelectorAll('#video-title');
+        titleElements.forEach(title => {
+            if (title.style.webkitLineClamp) {
+                title.style.webkitLineClamp = 'unset';
+            }
+            if (title.style.maxHeight) {
+                title.style.maxHeight = 'none';
+            }
         });
-    };
+    }
 
-    // Run once on page load
-    removeClamp();
+    // Initialize MutationObserver to watch for dynamic content changes
+    function initObserver() {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach(mutation => {
+                // Check for added nodes
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === 1) { // Element node
+                        removeInlineStyles(node);
+                    }
+                });
 
-    // Watch for dynamic changes (e.g., AJAX navigation, infinite scroll)
-    const observer = new MutationObserver(() => {
-        removeClamp();
-    });
+                // Check for style attribute changes
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    removeInlineStyles(mutation.target.closest('ytd-rich-grid-media, ytd-grid-video-renderer, ytd-compact-video-renderer'));
+                }
+            });
+        });
 
-    observer.observe(document.documentElement, {
-        childList: true,
-        subtree: true,
-        attributes: true
-    });
+        // Start observing with appropriate configuration
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style']
+        });
+    }  
+
+    // Initial setup
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            injectStyles();
+            initObserver();
+        });
+    } else {
+        injectStyles();
+        initObserver();
+    }
 })();
+
