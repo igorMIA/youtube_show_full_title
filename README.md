@@ -1,4 +1,4 @@
-# Important! This is the vibe code test.
+# This is vibe coded :).
 
 # YouTube Full Titles
 
