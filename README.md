@@ -8,18 +8,18 @@ This Tampermonkey/Greasemonkey user script ensures that long YouTube video title
 	•	Works Dynamically: Uses a MutationObserver to catch YouTube’s AJAX navigation and infinite scrolling, re-applying fixes whenever new videos are loaded.
 
 ## Installation
-	1.	Install Tampermonkey or Greasemonkey
-	•	Tampermonkey for Chrome/Edge/Firefox
-	•	Greasemonkey for Firefox
-	2.	Create a New Script
-	•	Open the Tampermonkey or Greasemonkey dashboard.
-	•	Click “Create a new script…”
-	3.	Copy the Script
-	•	Paste the contents of the YouTube Full Titles script into the editor.
-	•	Save the script.
-	4.	Go to YouTube
-	•	Refresh or open YouTube.
-	•	You should now see long titles displayed without truncation or overlap.
+	1.Install Tampermonkey or Greasemonkey
+		•Tampermonkey for Chrome/Edge/Firefox
+		•Greasemonkey for Firefox
+	2.Create a New Script
+		•Open the Tampermonkey or Greasemonkey dashboard.
+		•Click “Create a new script…”
+	3.Copy the Script
+		•Paste the contents of the YouTube Full Titles script into the editor.
+		•Save the script.
+	4.Go to YouTube
+		•Refresh or open YouTube.
+		•You should now see long titles displayed without truncation or overlap.
 
 ## Usage & Configuration
 	•	Line Height
